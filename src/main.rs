@@ -1,32 +1,23 @@
-extern crate tun_tap;
-use std::io;
-fn main() -> io::Result<()> {
-    let nic = tun_tap::Iface::new("tun0", tun_tap::Mode::Tun)?;
+use std::{fs::File, io::Write};
 
-    let mut buf = [0u8; 1504];
+fn main() -> std::io::Result<()> {
+    let mut idx = 0;
+
+    let mut lines = Vec::new();
     loop {
-        let nbytes = nic.recv(&mut buf[..])?;
+        if idx > 1000000 {
+            break;
+        };
 
-        match etherparse::Ipv4HeaderSlice::from_slice(&buf[4..nbytes]) {
-            Ok(header) => {
-                let src = header.source_addr();
-                let dst = header.destination_addr();
-                let protocol = header.protocol();
-
-                eprint!("Protocol: {}", protocol.0);
-
-                eprint!("src: {} dst: {}", src, dst);
-            }
-            Err(e) => {
-                eprint!("error parsing ipv4 header: {:?}", e);
-            }
-        }
-
-        let mut response = [0u8; 1504];
-        response[0] = 0x45;
-
-        let response_len = nic.send(&response[..nbytes])?;
-
-        eprint!("wrote {} bytes", response_len);
+        lines.push(format!("LINE NUMBER: {}", idx));
+        idx += 1;
     }
+
+    let mut file = File::create("text.txt")?;
+
+    file.write_all(lines.join("\n").as_bytes())?;
+
+    println!("DONE!");
+
+    Ok(())
 }
