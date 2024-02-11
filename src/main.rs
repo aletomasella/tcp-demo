@@ -1,5 +1,5 @@
 extern crate tun_tap;
-use std::{io, u16};
+use std::io;
 fn main() -> io::Result<()> {
     let nic = tun_tap::Iface::new("tun0", tun_tap::Mode::Tun)?;
 
@@ -7,15 +7,26 @@ fn main() -> io::Result<()> {
     loop {
         let nbytes = nic.recv(&mut buf[..])?;
 
-        let flags = u16::from_be_bytes([buf[0], buf[1]]);
-        let proto = u16::from_be_bytes([buf[2], buf[3]]);
+        match etherparse::Ipv4HeaderSlice::from_slice(&buf[4..nbytes]) {
+            Ok(header) => {
+                let src = header.source_addr();
+                let dst = header.destination_addr();
+                let protocol = header.protocol();
 
-        if proto != 0x800 {
-            // NO IPV4
-            continue;
+                eprint!("Protocol: {}", protocol.0);
+
+                eprint!("src: {} dst: {}", src, dst);
+            }
+            Err(e) => {
+                eprint!("error parsing ipv4 header: {:?}", e);
+            }
         }
 
-        eprint!("flags {} proto: {}", flags, proto);
-        eprint!("read {} bytes: {:x?}", nbytes, &buf[4..nbytes]);
+        let mut response = [0u8; 1504];
+        response[0] = 0x45;
+
+        let response_len = nic.send(&response[..nbytes])?;
+
+        eprint!("wrote {} bytes", response_len);
     }
 }
