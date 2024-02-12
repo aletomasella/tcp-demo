@@ -1,25 +1,42 @@
+use std::collections::HashSet;
+
 pub mod algorithms;
 
-
+const DICTIONARY : &str = include_str!("../dictionary.txt");
 const WORDS_LENGTH : usize = 5;
-pub fn play<G : Guesser>(answer: &'static str, mut guesser : G, max_attempts : usize) -> Option<usize> {
-let mut history = Vec::new();
 
-    // ENSURE GUESS AND ANSWER ARE LOWERCASE
-    let answer = answer.to_lowercase();
-    for i in 1..= max_attempts {
-        let guess = guesser.guess(&history[..]).to_lowercase();
+pub struct Wordle {
+    dictionary: HashSet<&'static str>,
+}
 
-        if guess == answer {
-            println!("You win!");
-            return Some(i);
-        }
+impl Wordle {
+    pub fn new() -> Wordle {
+        // Create a HashSet from the dictionary
+        let dictionary = HashSet::from_iter(DICTIONARY.lines().map(|line| line.split_once(' ').expect("Every line is word + space + frequency").0));
 
-        let mut correctness = Correctness::compute(&answer, &guess);
-
-        history.push(Guess { word: guess, correctness });
+        Wordle { dictionary }
     }
-None
+
+    pub fn play<G : Guesser>(&self, answer: &'static str, mut guesser : G, max_attempts : usize) -> Option<usize> {
+        let mut history = Vec::new();
+        // ENSURE GUESS AND ANSWER ARE LOWERCASE
+        let answer = answer.to_lowercase();
+        for i in 1..= max_attempts {
+            let guess = guesser.guess(&history[..]).to_lowercase();
+            // Ensure the guess is in the dictionary
+            if !self.dictionary.contains(&guess[..]) {
+                println!("{} is not in the dictionary", guess);
+                continue;
+            }
+            if guess == answer {
+                println!("You win!");
+                return Some(i);
+            }
+            let mut correctness = Correctness::compute(&answer, &guess);
+            history.push(Guess { word: guess, correctness });
+        }
+        None
+    }
 }
 
 
@@ -86,9 +103,45 @@ pub trait Guesser {
     fn guess(&mut self, history : &[Guess]) -> String;
 }
 
+impl Guesser for fn(history : &[Guess]) -> String {
+    fn guess(&mut self, history : &[Guess]) -> String {
+        self(history)
+    }
+}
+
+
+
+#[cfg(test)]
+macro_rules! guesser {
+(|$history:ident| $impl:block) => {{
+    struct G;
+    impl $crate::Guesser for G {
+        fn guess(&mut self, $history : &[Guess]) -> String {
+            $impl
+        }
+    }
+    G
+}};
+}
+
 #[cfg(test)]
 mod tests {
 
+    mod game {
+        use crate::{Guesser,Guess,Wordle};
+
+        #[test]
+        fn play () {
+            let wordle = Wordle::new();
+
+            let guesser = guesser!(|_history| {
+                "hello".to_string()
+            });
+
+            assert_eq!(wordle.play("hello", guesser, 10), Some(1));
+            }
+
+    }
 
     mod compute {
         use super::super::*;
