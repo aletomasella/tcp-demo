@@ -1,12 +1,73 @@
-use crate::{Guesser, Guess, Correctness};
+use std::collections::HashMap;
+use crate::{Guesser, Guess, Correctness, DICTIONARY};
 
 pub struct Naive {
-    words : Vec<String>,
-    word_length : usize
+    // STATIC STRING TO FREQUENCY
+remaining_words: HashMap<&'static str, usize>,
+
+}
+
+
+impl Naive {
+   pub fn new () -> Self {
+        let remaining = HashMap::from_iter(DICTIONARY.lines().map(|line| {
+            let (word,count) = line.split_once(' ').expect("Every line should have a word + space + frequency");
+            let count = count.parse::<usize>().expect("Every frequency should be a number");
+            (word, count)
+        }).into_iter());
+
+        Naive { remaining_words: remaining }
+    }
+
+}
+
+struct Candidate {
+    word: &'static str,
+    count: usize,
+    goodness: f64,
+}
+
+impl  Candidate {
+    fn new() -> Self {
+        Candidate {
+            word: "",
+            count: 0,
+            goodness: 0.0,
+        }
+    }
 }
 
 impl Guesser for Naive {
+
+
     fn guess(&mut self, history : &[Guess]) -> String {
-        todo!("Implement the Naive guesser")
+
+        if let Some(guess) = history.last() {
+            // TODO: Update the remaining words based on the last guess
+        }
+
+        // Initialize the best guess
+        let mut bestGuess = Candidate::new();
+
+
+
+        for (&word, &count) in &self.remaining_words {
+            // TODO: Calculate the goodness of the word
+            let goodness = count as f64;
+
+
+            // Get best guess based on frequency
+            if count > bestGuess.count {
+                bestGuess = Candidate { word, count, goodness };
+            }
+        }
+
+        // Clear the best guess from the remaining words
+        self.remaining_words.remove(bestGuess.word);
+
+
+        bestGuess.word.to_string()
+
+        // todo!("Implement the Naive guesser")
     }
 }

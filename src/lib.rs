@@ -131,7 +131,7 @@ mod tests {
         use crate::{Guesser,Guess,Wordle};
 
         #[test]
-        fn play () {
+        fn guess_one () {
             let wordle = Wordle::new();
 
             let guesser = guesser!(|_history| {
@@ -140,6 +140,33 @@ mod tests {
 
             assert_eq!(wordle.play("hello", guesser, 10), Some(1));
             }
+
+
+        #[test]
+        fn guess_two () {
+            let wordle = Wordle::new();
+
+            let guesser = guesser!(|_history| {
+                if _history.len() == 1 {
+                    return "hello".to_string()
+               }
+                "world".to_string()
+            });
+
+            assert_eq!(wordle.play("hello", guesser, 10), Some(2));
+        }
+
+
+        #[test]
+        fn wrong_guess () {
+            let wordle = Wordle::new();
+
+            let guesser = guesser!(|_history| {
+                "world".to_string()
+            });
+
+            assert_eq!(wordle.play("hello", guesser, 10), None);
+        }
 
     }
 
