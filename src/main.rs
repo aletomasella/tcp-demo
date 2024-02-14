@@ -1,12 +1,11 @@
 use wordle_solver::Wordle;
 use wordle_solver::algorithms::{Naive};
 const GAMES : &str = include_str!("../answers.txt");
-const MAX_ATTEMPTS : usize = 32;
+const MAX_ATTEMPTS : usize = 10000;
 
 fn main() -> std::io::Result<()> {
     let wordle = Wordle::new();
 
-    let mut total = 0;
 
     // for line in GAMES.lines() {
     //

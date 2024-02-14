@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::{Guesser, Guess, Correctness, DICTIONARY};
+use crate::{Guesser, Guess, DICTIONARY};
 
 pub struct Naive {
     // STATIC STRING TO FREQUENCY
@@ -47,7 +47,7 @@ impl Guesser for Naive {
         }
 
         // Initialize the best guess
-        let mut bestGuess = Candidate::new();
+        let mut best_guess = Candidate::new();
 
 
 
@@ -57,16 +57,16 @@ impl Guesser for Naive {
 
 
             // Get best guess based on frequency
-            if count > bestGuess.count {
-                bestGuess = Candidate { word, count, goodness };
+            if count > best_guess.count {
+                best_guess = Candidate { word, count, goodness };
             }
         }
 
         // Clear the best guess from the remaining words
-        self.remaining_words.remove(bestGuess.word);
+        self.remaining_words.remove(best_guess.word);
 
 
-        bestGuess.word.to_string()
+        best_guess.word.to_string()
 
         // todo!("Implement the Naive guesser")
     }

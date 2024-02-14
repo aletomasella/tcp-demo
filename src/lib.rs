@@ -30,11 +30,13 @@ impl Wordle {
             }
             if guess == answer {
                 println!("You win!");
+                println!("You win!");
                 return Some(i);
             }
             let mut correctness = Correctness::compute(&answer, &guess);
             history.push(Guess { word: guess, correctness });
         }
+        println!("You lose!");
         None
     }
 }
@@ -128,7 +130,7 @@ macro_rules! guesser {
 mod tests {
 
     mod game {
-        use crate::{Guesser,Guess,Wordle};
+        use crate::{Guess,Wordle};
 
         #[test]
         fn guess_one () {
