@@ -24,12 +24,17 @@ impl Wordle {
         for i in 1..= max_attempts {
             let guess = guesser.guess(&history[..]).to_lowercase();
             // Ensure the guess is in the dictionary
+
+            if self.dictionary.len() == 0 {
+                println!("Dictionary is empty");
+                return None;
+            }
+
             if !self.dictionary.contains(&guess[..]) {
                 println!("{} is not in the dictionary", guess);
                 continue;
             }
             if guess == answer {
-                println!("You win!");
                 println!("You win!");
                 return Some(i);
             }
@@ -43,7 +48,7 @@ impl Wordle {
 
 
 impl Correctness {
-    fn compute(answer: &str, guess: &str) -> [Correctness; 5] {
+    fn compute(answer: &str, guess: &str) -> [Correctness; WORDS_LENGTH] {
 
         // Ensure the word and guess are the same length (5)
         assert_eq!(answer.len(), WORDS_LENGTH);
@@ -51,7 +56,7 @@ impl Correctness {
 
 
         // We assume the word and guess are all wrong
-        let mut correctness = [Correctness::Incorrect; 5];
+        let mut correctness = [Correctness::Incorrect; WORDS_LENGTH];
         let mut used = [false; 5];
 
         // Mark the letters that are correct
@@ -98,9 +103,49 @@ pub enum Correctness {
 
 pub struct Guess {
     pub word : String,
-    pub correctness : [Correctness; 5]
+    pub correctness : [Correctness; WORDS_LENGTH]
 }
 
+impl Guess {
+     pub fn new(word : String, correctness : [Correctness; WORDS_LENGTH]) -> Self {
+          Guess { word, correctness }
+     }
+
+
+    pub fn matches(&self, word : &str) -> bool {
+        // Ensure the word and guess are the same length (5)
+        assert_eq!(word.len(), WORDS_LENGTH);
+        assert_eq!(self.word.len(), WORDS_LENGTH);
+
+
+        // Here we compare the correctness of the word and the guess
+        // If the correctness of the word and the guess are the same, then the guess matches the word
+        // Otherwise, the guess does not match the word
+        // We can use the zip function to iterate over the correctness of the word and the guess (zip returns a tuple of the elements of the two iterators,
+        // and we can use the & operator to get a reference to the elements of the tuple)
+        //
+        for ((g, &c), w) in self.word.chars().zip(&self.correctness).zip(word.chars()){
+            match c {
+                Correctness::Correct => {
+                    if g != w {
+                        return false;
+                    }
+                }
+                Correctness::Present => {
+                    if g != w && !self.word.contains(w) {
+                        return false;
+                    }
+                }
+                Correctness::Incorrect => {
+                    if g == w {
+                        return false;
+                    }
+                }
+            }
+        }
+        true
+    }
+}
 pub trait Guesser {
     fn guess(&mut self, history : &[Guess]) -> String;
 }

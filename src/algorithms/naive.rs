@@ -42,21 +42,8 @@ impl Guesser for Naive {
 
         if let Some(guess) = history.last() {
             // TODO: Update the goodness of the words based on the last guess
-
-            for i in 0..guess.word.len() {
-                if guess.correctness[i] == Correctness::Correct {
-                    // Remove all words that don't have the same letter in the same position
-                    self.remaining_words.retain(|word, _| word.chars().nth(i) == guess.word.chars().nth(i));
-                } else if guess.correctness[i] == Correctness::Present {
-                    // Remove all words that does not contain the letter
-                    self.remaining_words.retain(|word, _| word.contains(guess.word.chars().nth(i).expect("Every guess should have 5 letters")));
-
-                } else {
-                    // Remove all words that have the same letter in the same position
-                    self.remaining_words.retain(|word, _| word.chars().nth(i) != guess.word.chars().nth(i));
-                }
-            }
-
+            // Remove words that don't match the last guess
+            self.remaining_words.retain(|word, _| {guess.matches(word)});
         }
 
         // Initialize the best guess
@@ -69,7 +56,7 @@ impl Guesser for Naive {
             let goodness = count as f64;
 
             // Get best guess based on frequency
-            if count > best_guess.count {
+            if count > best_guess.count && word.len() == 5 {
                 best_guess = Candidate { word, count, goodness };
             }
         }
